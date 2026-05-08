@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Customer</title><link rel="stylesheet" href="styles.css" /></head>
+<body>
+  <div class="market-strip"><div class="container strip-inner"><a href="#">SAVE MORE ON APP</a><a href="seller.html">SELL ON LAZADA</a><a href="#">CUSTOMER CARE</a><a href="#">TRACK MY ORDER</a><a href="customer.html#login">LOGIN</a><a href="customer.html#signup">SIGN UP</a></div></div>
+  <header class="lazada-head"><div class="container head-inner"><div class="brand"><a href="index.html">Lazada</a></div><input class="search-input" placeholder="Search in Lazada" /><button class="search-btn">Search</button><nav class="nav-links light"><a href="index.html">Dashboard</a><a href="customer.html">Customer</a><a href="seller.html">Seller</a><a href="admin.html">Admin</a><a href="rider.html">Rider</a></nav></div></header>
+  <main class="container">
+    <!-- Removed Dashboard and Search as requested -->
+  </main>
+  <div class="container grid grid-2">
+    <section class="card" id="authSection">
+      <div id="loginUI">
+        <h2>Login</h2>
+        <div class="row">
+          <input id="loginEmail" placeholder="Email" />
+          <button id="googleLoginBtn">Log in with Gmail</button>
+        </div>
+        <input id="loginPassword" type="password" placeholder="Password" />
+        <button id="loginBtn">Login</button>
+        <p>Don't have an account? <a href="#" id="showSignup">Sign Up</a></p>
+      </div>
+
+      <div id="signupUI" class="hidden">
+        <h2>Sign Up</h2>
+        <div class="row">
+          <input id="signupEmail" placeholder="Email" />
+        </div>
+        <input id="signupPassword" type="password" placeholder="Password" />
+        <button id="signupBtn">Sign Up</button>
+        <p>Already have an account? <a href="#" id="showLogin">Login</a></p>
+      </div>
+
+      <h3>Profile</h3>
+      <input id="custName" placeholder="Name" />
+      <input id="custAddress" placeholder="Address" />
+      <input id="custMobile" placeholder="Mobile Number" />
+      <button id="saveProfile">Save Profile</button>
+    </section>
+    <section class="card">
+      <h2>Profile Overview</h2>
+      <div class="meta">Products, transactions, and reviews only appear after real inputs.</div>
+      <div id="profileSummary"></div>
+    </section>
+  </div>
+  <script src="app.js"></script>
+  <script>
+    const data=getData(); let cart=[];
+    function hydrate(){
+      el("custName").value=data.customer.profile.name||"";
+      el("custAddress").value=data.customer.profile.address||"";
+      el("custMobile").value=data.customer.profile.mobile||"";
+      updateProfileSummary();
+    }
+    
+    function updateProfileSummary() {
+      el("profileSummary").innerHTML = `
+        <p><strong>Name:</strong> ${data.customer.profile.name || "N/A"}</p>
+        <p><strong>Email:</strong> ${data.customer.email || "N/A"}</p>
+        <p><strong>Address:</strong> ${data.customer.profile.address || "N/A"}</p>
+      `;
+    }
+
+    function showLogin() {
+      el("loginUI").classList.remove("hidden");
+      el("signupUI").classList.add("hidden");
+    }
+
+    function showSignup() {
+      el("loginUI").classList.add("hidden");
+      el("signupUI").classList.remove("hidden");
+    }
+
+    // Check URL hash to show correct UI
+    function handleHash() {
+      if (window.location.hash === "#signup") {
+        showSignup();
+      } else {
+        showLogin();
+      }
+    }
+
+    window.onhashchange = handleHash;
+    handleHash();
+
+    el("showSignup").onclick = (e) => { e.preventDefault(); window.location.hash = "signup"; };
+    el("showLogin").onclick = (e) => { e.preventDefault(); window.location.hash = "login"; };
+
+    el("loginBtn").onclick = () => {
+      data.customer.email = el("loginEmail").value;
+      data.customer.password = el("loginPassword").value;
+      saveData(data);
+      alert("Logged in successfully!");
+      updateProfileSummary();
+    };
+
+    el("googleLoginBtn").onclick = () => {
+      alert("Redirecting to Gmail login...");
+      data.customer.authMethod = "google";
+      saveData(data);
+    };
+
+    el("signupBtn").onclick = () => {
+      data.customer.email = el("signupEmail").value;
+      data.customer.password = el("signupPassword").value;
+      saveData(data);
+      alert("Signed up successfully!");
+      updateProfileSummary();
+    };
+
+    function customerFilteredProducts(){const q=el("customerSearchInput").value.trim().toLowerCase();const cat=el("customerCategory").value;return data.seller.products.filter((p)=>{const byText=!q||p.name.toLowerCase().includes(q);const byCategory=!cat||p.category===cat;return byText&&byCategory;});}
+    function renderProductCatalog(){renderList("customerProductList",customerFilteredProducts(),(p)=>`<div class="item product-card">${p.image?`<img class="product-image" src="${p.image}" alt="${p.name}" />`:""}<h3>${p.name}</h3><div class="meta">Category: ${p.category}</div><div class="meta">Qty: ${p.quantity}</div><div class="meta">Price: ₱${Number(p.price).toFixed(2)}</div><button data-add="${p.id}">Add to Cart</button></div>`);document.querySelectorAll("[data-add]").forEach((btn)=>btn.addEventListener("click",()=>{const product=data.seller.products.find((p)=>p.id===btn.dataset.add);if(!product)return;cart.push({productId:product.id,name:product.name,price:Number(product.price)});renderCart();}));}
+    function renderCart(){renderList("customerCartList",cart,(item,idx)=>`<div class="item"><strong>${item.name}</strong><div class="meta">₱${item.price.toFixed(2)}</div><button class="secondary" data-remove="${idx}">Remove</button></div>`);document.querySelectorAll("[data-remove]").forEach((btn)=>btn.addEventListener("click",()=>{cart.splice(Number(btn.dataset.remove),1);renderCart();}));}
+    function renderOrders(){renderList("customerOrders",data.orders,(o)=>`<div class="item"><h3>${o.productName}</h3><div class="meta">Price: ₱${Number(o.price).toFixed(2)}</div><div class="meta">Status: <span class="status">${o.status}</span></div>${o.delivered&&!o.receivedByCustomer?`<button data-recv="${o.id}">Confirm Delivery Received</button>`:""}${o.receivedByCustomer&&!o.review?`<input id="rText_${o.id}" placeholder="Review/comment" /><input id="rImg_${o.id}" placeholder="Review image url/path" /><button data-review="${o.id}">Submit Review</button>`:""}${o.review?`<div class="meta">Review: ${o.review.comment} (${o.review.image||"no image"})</div>`:""}</div>`);document.querySelectorAll("[data-recv]").forEach((btn)=>btn.addEventListener("click",()=>{const order=data.orders.find((o)=>o.id===btn.dataset.recv);if(!order)return;order.receivedByCustomer=true;order.status="received_by_customer";pushNotification(data,"seller",`Customer received ${order.productName}.`);pushNotification(data,"admin",`Customer confirmed receive for ${order.productName}.`);saveData(data);renderOrders();}));document.querySelectorAll("[data-review]").forEach((btn)=>btn.addEventListener("click",()=>{const order=data.orders.find((o)=>o.id===btn.dataset.review);if(!order)return;order.review={comment:el(`rText_${order.id}`).value.trim(),image:el(`rImg_${order.id}`).value.trim()};saveData(data);renderOrders();}));}
+    
+    el("saveProfile").addEventListener("click",()=>{data.customer.profile={name:el("custName").value.trim(),address:el("custAddress").value.trim(),mobile:el("custMobile").value.trim()};saveData(data);alert("Customer profile saved.");updateProfileSummary();});
+    el("customerSearchInput").addEventListener("input",renderProductCatalog);el("customerCategory").addEventListener("change",renderProductCatalog);
+    el("customerCheckoutBtn").addEventListener("click",()=>{const result=checkoutCart(data,cart);if(!result.ok)return;cart=[];renderCart();renderOrders();renderNotifications("customerNotifications","customer",data);alert(result.message);});
+    hydrate();renderProductCatalog();renderCart();renderOrders();renderNotifications("customerNotifications","customer",data);
+  </script>
+</body></html>

@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lazada Philippines | Best Deals & Free Shipping</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="top-strip">
+    <div class="container strip-inner">
+      <a href="#">SAVE MORE ON APP</a>
+      <a href="seller.html">SELL ON LAZADA</a>
+      <a href="#">CUSTOMER CARE</a>
+      <a href="#">TRACK MY ORDER</a>
+      <a href="customer.html#login">LOGIN</a>
+      <a href="customer.html#signup">SIGN UP</a>
+    </div>
+  </div>
+
+  <header class="main-header">
+    <div class="container header-inner">
+      <div class="logo"><a href="index.html">Lazada</a></div>
+      <div class="search-bar">
+        <input id="searchInput" type="text" placeholder="Search in Lazada" />
+        <button id="searchBtn" type="button">Search</button>
+      </div>
+      <div class="header-links">
+        <a href="customer.html">Customer</a>
+        <a href="seller.html">Seller</a>
+        <a href="admin.html">Admin</a>
+        <a href="rider.html">Rider</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-banner">
+        <span class="pill">Flash Sale</span>
+        <h1>Add to Cart, Add to Life</h1>
+        <p>Shop from trusted brands, discover exclusive vouchers, and enjoy fast shipping nationwide.</p>
+      </div>
+      <aside class="hero-app">
+        <h2>TRY OUR APP</h2>
+        <p class="muted">4.8 Rated</p>
+        <ul>
+          <li>Free Shipping</li>
+          <li>Exclusive Vouchers</li>
+          <li>Better deals daily</li>
+        </ul>
+        <div class="qr-box">QR CODE</div>
+      </aside>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <h2>Flash Sale</h2>
+        <p class="flash-meta">On Sale Now <span id="flashTimer">00:00:00</span></p>
+      </div>
+      <div id="flashProducts" class="product-grid">
+        <!-- Products will be rendered here -->
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <h2>Categories</h2>
+        <p>Click category to view listed products</p>
+      </div>
+      <div class="categories" id="categoryGrid">
+        <!-- Categories will be rendered here -->
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <h2>Just For You</h2>
+        <p>Live products from verified seller listings</p>
+      </div>
+      <div id="productList" class="product-grid">
+        <!-- Products will be rendered here -->
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Cart / Checkout</h2>
+      <div id="cartList" class="list"></div>
+      <button id="checkoutBtn">Checkout & Confirm Buy</button>
+    </section>
+  </main>
+
+  <div class="modal hidden" id="categoryModal">
+    <div class="modal-backdrop" id="modalClose"></div>
+    <div class="modal-panel">
+      <div class="section-head">
+        <h3 id="modalTitle">Category products</h3>
+        <button class="secondary" id="modalCloseBtn">Close</button>
+      </div>
+      <div id="modalProducts" class="product-grid"></div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <h3>Customer Care</h3>
+        <a href="#">Help Center</a>
+        <a href="#">How to Buy</a>
+        <a href="#">Shipping & Delivery</a>
+        <a href="#">How to Return</a>
+      </div>
+      <div>
+        <h3>Lazada</h3>
+        <a href="#">About Lazada</a>
+        <a href="#">Careers</a>
+        <a href="#">Terms & Conditions</a>
+        <a href="#">Privacy Policy</a>
+      </div>
+      <div>
+        <h3>Payment Methods</h3>
+        <p>Visa, Mastercard, JCB, GCash, Maya, LazWallet</p>
+      </div>
+      <div>
+        <h3>Delivery Services</h3>
+        <p>Lazada Logistics, J&T, Flash Express, Ximex</p>
+      </div>
+    </div>
+    <p class="copyright">© Lazada 2026</p>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    const categories = ["mobiles", "men tshirts", "women shirts", "dresses", "wireless buds"];
+    const data = getData(); let cart = [];
+    const formatPrice = (price) => `P${Number(price).toFixed(2)}`;
+    const renderProductCard = (p) => `
+      <article class="product-card">
+        <div class="product-img-container">
+          ${p.image ? `<img class="product-image" src="${p.image}" alt="${p.name}" />` : `<div class="no-image">No Image Available</div>`}
+        </div>
+        <div class="product-info">
+          <h3 title="${p.name}">${p.name}</h3>
+          <p class="meta">Category: ${p.category}</p>
+          <p class="price">${formatPrice(p.price)}</p>
+          <button class="add-to-cart-btn" data-add="${p.id}">Add to Cart</button>
+        </div>
+      </article>`;
+    
+    function bindAddButtons(){
+      document.querySelectorAll("[data-add]").forEach((btn)=>{
+        btn.addEventListener("click",()=>{
+          const product=data.seller.products.find((p)=>p.id===btn.dataset.add);
+          if(!product)return;
+          cart.push({productId:product.id,name:product.name,price:Number(product.price)});
+          renderCart();
+        });
+      });
+    }
+
+    function renderAllProducts(){
+      const q=el("searchInput").value.trim().toLowerCase();
+      const products=data.seller.products.filter((p)=>!q||p.name.toLowerCase().includes(q));
+      renderList("productList",products,(p)=>renderProductCard(p));
+      bindAddButtons();
+    }
+
+    function renderFlashProducts(){
+      const flash=data.seller.products.slice(0,6);
+      renderList("flashProducts",flash,(p)=>renderProductCard(p));
+      bindAddButtons();
+    }
+
+    function openCategory(category){
+      const filtered=data.seller.products.filter((p)=>p.category===category);
+      el("modalTitle").textContent=`${category} products`;
+      renderList("modalProducts",filtered,(p)=>renderProductCard(p));
+      bindAddButtons();
+      el("categoryModal").classList.remove("hidden");
+    }
+
+    function renderCategories(){
+      const host=el("categoryGrid");
+      if(!host) return;
+      host.innerHTML=categories.map((c)=>`<button class="category-tile" data-category="${c}">${c}</button>`).join("");
+      host.querySelectorAll("[data-category]").forEach((btn)=>btn.addEventListener("click",()=>openCategory(btn.dataset.category)));
+    }
+
+    function renderCart(){
+      renderList("cartList",cart,(c,i)=>`<div class="item"><strong>${c.name}</strong><div class="meta">${formatPrice(c.price)}</div><button class="secondary" data-remove="${i}">Remove</button></div>`);
+      document.querySelectorAll("[data-remove]").forEach((btn)=>btn.addEventListener("click",()=>{
+        cart.splice(Number(btn.dataset.remove),1);
+        renderCart();
+      }));
+    }
+
+    function initFlashTimer(){
+      let remaining=24*60*60;
+      setInterval(()=>{
+        remaining=remaining>0?remaining-1:24*60*60;
+        const h=String(Math.floor(remaining/3600)).padStart(2,"0");
+        const m=String(Math.floor((remaining%3600)/60)).padStart(2,"0");
+        const s=String(remaining%60).padStart(2,"0");
+        const timerEl = el("flashTimer");
+        if(timerEl) timerEl.textContent=`${h}:${m}:${s}`;
+      },1000);
+    }
+
+    el("searchInput").addEventListener("input",renderAllProducts); 
+    el("searchBtn").addEventListener("click",renderAllProducts);
+    el("checkoutBtn").addEventListener("click",()=>{
+      const result=checkoutCart(data,cart);
+      if(!result.ok)return;
+      cart=[];
+      renderCart();
+      alert(result.message);
+    });
+    el("modalClose").addEventListener("click",()=>el("categoryModal").classList.add("hidden")); 
+    el("modalCloseBtn").addEventListener("click",()=>el("categoryModal").classList.add("hidden"));
+
+    initFlashTimer(); renderCategories(); renderAllProducts(); renderFlashProducts(); renderCart();
+  </script>
+</body>
+</html>
